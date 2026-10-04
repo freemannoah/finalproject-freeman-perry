@@ -1,10 +1,12 @@
 //Message DTO
 export interface Message {
-    message_id: string;
-    post_id: string;
-    sender_id: string;
-    recipient_id: string;
-    body: string;
-    time: string;
-    imageData?: string;
+    message_id: number
+    post_id: number
+    sender_id: number
+    senderDisplayName: string
+    recipient_id: number
+    recipientDisplayName: string
+    body: string
+    time: string
+    imageData?: string
 }

@@ -2,10 +2,12 @@ import { Message } from "./Message";
 
 //Post DTOs
 export interface SimplePost {
-    post_id: string;
-    user_id: string;
+    post_id: number;
+    user_id: number;
+    userDisplayName: string;
     title: string;
     isResolved: boolean;
+    created: string;
     imageData?: string;
 }
 
