@@ -1,4 +1,4 @@
-import { Message } from "./Message";
+import type { Message } from "./Message";
 
 //Post DTOs
 export interface SimplePost {

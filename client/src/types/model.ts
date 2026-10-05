@@ -1,103 +1,39 @@
-export class Model {
-    currUser?: User
-    cachedUsers: Record<number, User>
-    currentPost?: PostDetails
-    board?: Post[]
+import type { SimpleUser } from "../../../shared/types/User";
+import type { SimplePost, Post } from "../../../shared/types/Post";
 
-    isAuthenticated: boolean
-    authLoading: boolean
+export interface ClientModel {
+    currUser?: SimpleUser;
 
-    constructor() {
-        this.currUser = undefined;
-        this.cachedUsers = {};
-        this.currentPost =  undefined;
-        this.board = undefined;
+    /**
+     * Public user information retrieved from GET /user/{user_id}.
+     *
+     * The key is the user's ID.
+     */
+    cachedUsers: Record<number, SimpleUser>;
 
-        this.isAuthenticated = false;
-        this.authLoading = true;
-    }
-}
+    /**
+     * Currently opened post.
+     */
+    currentPost?: Post;
 
-export class User {
-    id: number
-    displayName: string
-    residence: string
-    created: Date
+    /**
+     * Posts currently displayed on the board.
+     */
+    board?: SimplePost[];
 
-    constructor(id: number, displayName: string, residence: string, created: Date) {
-        this.id = id;
-        this.displayName = displayName;
-        this.residence = residence;
-        this.created = created;
-    }
-}
+    /**
+     * True once the server has confirmed that we have
+     * an authenticated session.
+     */
+    isAuthenticated: boolean;
 
-export class Post {
-    post_id: number
-    user_id: number
-    userDisplayName: string
-    title: string
-    isResolved: boolean
-    created: Date
-    imageData?: string
-
-    constructor(post_id: number, user_id: number, userDisplayName: string, title: string, isResolved: boolean, created: Date, imageData?: string){
-        this.post_id = post_id;
-        this.user_id = user_id;
-        this.userDisplayName = userDisplayName;
-        this.title = title;
-        this.isResolved = isResolved;
-        this.created = created;
-        this.imageData = imageData;
-    }
-}
-
-export class PostDetails {
-    post_id: number
-    user_id: number
-    userDisplayName: string
-    title: string
-    isResolved: boolean
-    created: Date
-    messages: Message[]
-    description?: string
-    imageData?: string
-
-    constructor(post_id: number, user_id: number, userDisplayName: string, title: string, isResolved: boolean, created: Date, messages: Message[], description?: string, imageData?: string){
-        this.post_id = post_id;
-        this.user_id = user_id;
-        this.userDisplayName = userDisplayName;
-        this.title = title;
-        this.isResolved = isResolved;
-        this.created = created;
-        this.messages = messages;
-        this.description = description;
-        this.imageData = imageData;
-    }
-}
-
-export class Message {
-    message_id: number
-    post_id: number
-    sender_id: number
-    senderDisplayName: string
-    recipient_id: number
-    recipientDisplayName: string
-    body: string
-    time: Date
-    imageData?: string
-
-    constructor(message_id: number, post_id: number, sender_id: number, senderDisplayName: string, recipient_id: number, recipientDisplayName: string, body: string, time: Date, imageData?: string){
-        this.message_id = message_id;
-        this.post_id = post_id;
-        this.sender_id = sender_id;
-        this.senderDisplayName = senderDisplayName;
-        this.recipient_id = recipient_id
-        this.recipientDisplayName = recipientDisplayName;
-        this.body = body;
-        this.time = time;
-        this.imageData = imageData;
-    }
+    /**
+     * True while the initial authentication check is happening.
+     *
+     * This prevents the application from briefly displaying
+     * the login page during startup.
+     */
+    authLoading: boolean;
 }
 
 export const RES_HALLS = [
