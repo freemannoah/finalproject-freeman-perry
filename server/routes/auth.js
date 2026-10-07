@@ -37,8 +37,8 @@ router.post('/login', async (req, res) => {
     );
 
     activeTokens.add(token);
-
-    return sendResponse(res, 200, { Token: token }, "Login successful", true);
+    res.cookie('sessionToken', token, {httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 * 1000});
+    return sendResponse(res, 200, {}, "Login successful", true);
   } 
   catch (error) {
 
@@ -49,7 +49,33 @@ router.post('/login', async (req, res) => {
 router.get('/logout', requireAuth, (req, res) => {
   
   activeTokens.delete(req.token);
+  res.clearCookie('sessionToken');
   return sendResponse(res, 200, {}, "Logged out successfully", true);
+});
+
+router.get('/me', requireAuth, async (req, res) => {
+  try {
+    const user = await User.findOne({
+      user_id: req.user.user_id
+    });
+
+    if (!user) {
+      return sendResponse(res, 404, {}, "User not found", false);
+    }
+    
+    return sendResponse(
+      res, 200,
+      {
+        user_id: user.user_id,
+        display_name: user.display_name,
+        residence: user.residence,
+        created: user.created
+      },
+      "Current user retrieved", true
+    );
+  } catch (error) {
+    return sendResponse(res, 500, {}, error.message, false);
+  }
 });
 
 export default router;

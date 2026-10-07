@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useModel } from "./context/ModelContext";
 
 import LoginPage from "./pages/LoginPage";
+import BoardPage from "./pages/BoardPage";
 
 
 function App() {
@@ -26,12 +27,12 @@ function App() {
         </>
       ) : (
         <>
-          {/* <Route
+          <Route
             path="/board"
             element={<BoardPage />}
           />
 
-          <Route
+          {/* <Route
             path="/post/:postId"
             element={<PostPage />}
           />

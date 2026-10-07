@@ -5,13 +5,11 @@ export const activeTokens = new Set();
 
 export const requireAuth = (req, res, next) => {
 
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  const token = req.cookies?.sessionToken;
 
+  if (!token) {
     return sendResponse(res, 401, {}, "Authentication token missing or invalid", false);
   }
-
-  const token = authHeader.split(' ')[1];
 
   if (!activeTokens.has(token)) {
 
@@ -28,6 +26,7 @@ export const requireAuth = (req, res, next) => {
   catch (err) {
     
     activeTokens.delete(token);
+    res.clearCookie('sessionToken');
     return sendResponse(res, 401, {}, "Session expired or invalid token", false);
   }
 };
