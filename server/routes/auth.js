@@ -31,14 +31,19 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign(
 
-      { user_id: user.user_id, username: user.username },
+      { user_id: user.user_id, username: user.username, display_name: user.display_name },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
     activeTokens.add(token);
     res.cookie('sessionToken', token, {httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 * 1000});
-    return sendResponse(res, 200, {}, "Login successful", true);
+    return sendResponse(res, 200, {
+        user_id: user.user_id,
+        display_name: user.display_name,
+        residence: user.residence,
+        created: user.created
+      }, "Login successful", true);
   } 
   catch (error) {
 
@@ -62,7 +67,7 @@ router.get('/me', requireAuth, async (req, res) => {
     if (!user) {
       return sendResponse(res, 404, {}, "User not found", false);
     }
-    
+
     return sendResponse(
       res, 200,
       {

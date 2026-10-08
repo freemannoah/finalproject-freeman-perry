@@ -6,7 +6,7 @@ import { useModel } from "../../context/ModelContext";
 
 export default function LoginForm() {
 
-    const { login } = useModel();
+    const { model, login } = useModel();
 
     const navigate = useNavigate();
 
@@ -54,6 +54,8 @@ export default function LoginForm() {
         } finally {
             setSubmitting(false);
         }
+
+        console.log(model);
     };
 
 

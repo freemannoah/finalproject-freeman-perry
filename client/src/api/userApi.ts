@@ -27,7 +27,7 @@ export async function createUser(user: User): Promise<SimpleResponse<SimpleUser>
  * Authentication is required, but the requested user does
  * not have to be the logged-in user.
  */
-export async function getUser(userId: number): Promise<SimpleResponse<SimpleUser>> {
+export async function getUser(userId: string): Promise<SimpleResponse<SimpleUser>> {
     return apiRequest<SimpleResponse<SimpleUser>>(
         `/user/${userId}`,
         {

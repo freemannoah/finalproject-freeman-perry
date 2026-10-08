@@ -1,20 +1,32 @@
 import React from "react";
-import { Button, ButtonGroup, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Typography } from "@mui/material";
-import { useModel } from "../../context/ModelContext";
-import { type PostType } from "../../types/model";
+import {
+    Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    TextField,
+    Typography,
+} from "@mui/material";
 
-interface CreatePostDialogProps {
+import { useModel } from "../../context/ModelContext";
+import type { Post } from "../../../../shared/types/Post";
+
+interface EditPostDialogProps {
     open: boolean;
+    post: Post;
     onClose: () => void;
+    onSaved?: (post: Post) => void;
 }
 
-export default function CreatePostDialog({
+export default function EditPostDialog({
     open,
+    post,
     onClose,
-}: CreatePostDialogProps) {
-    const { model, createPost } = useModel();
+    onSaved,
+}: EditPostDialogProps) {
+    const { editPost } = useModel();
 
-    const [postType, setPostType] = React.useState<PostType>("Lost");
     const [title, setTitle] = React.useState("");
     const [description, setDescription] = React.useState("");
     const [imageData, setImageData] = React.useState("");
@@ -22,19 +34,23 @@ export default function CreatePostDialog({
     const [submitting, setSubmitting] = React.useState(false);
     const [error, setError] = React.useState("");
 
-    const reset = () => {
-        setTitle("");
-        setDescription("");
-        setImageData("");
+    React.useEffect(() => {
+        if (!open) {
+            return;
+        }
+
+        setTitle(post.title);
+        setDescription(post.description);
+        setImageData(post.imageData ?? "");
         setError("");
-    };
+    }, [open, post]);
 
     const handleClose = () => {
         if (submitting) {
             return;
         }
 
-        reset();
+        setError("");
         onClose();
     };
 
@@ -64,34 +80,26 @@ export default function CreatePostDialog({
             return;
         }
 
-        if (!model.currUser) {
-            setError("You must be logged in to create a post.");
-            return;
-        }
-
         setError("");
         setSubmitting(true);
 
         try {
-            await createPost({
-                post_id: "0",
-                user_id: model.currUser.user_id,
-                userDisplayName: model.currUser.display_name,
+            const updatedPost = await editPost({
+                ...post,
                 title: title.trim(),
                 description: description.trim(),
-                postType: postType,
-                isResolved: false,
-                created: new Date().toISOString(),
-                ...(imageData ? { imageData } : {}),
+                ...(imageData
+                    ? { imageData }
+                    : { imageData: "" }),
             });
 
-            reset();
+            onSaved?.(updatedPost);
             onClose();
         } catch (error) {
             setError(
                 error instanceof Error
                     ? error.message
-                    : "Failed to create post."
+                    : "Failed to edit post."
             );
         } finally {
             setSubmitting(false);
@@ -105,27 +113,7 @@ export default function CreatePostDialog({
             fullWidth
             maxWidth="sm"
         >
-            <DialogTitle>Create Lost & Found Post</DialogTitle>
-
-            <ButtonGroup
-                disableElevation
-                variant="contained"
-                aria-label="Disabled button group"
-                sx={{justifyContent: "center"}}
-            >
-                <Button
-                    onClick={() => {setPostType("Lost");}}
-                    variant={postType === "Lost" ? "contained" : "outlined"}
-                >
-                    Lost
-                </Button>
-                <Button
-                    onClick={() => {setPostType("Found");}}
-                    variant={postType === "Found" ? "contained" : "outlined"}
-                >
-                    Found
-                </Button>
-            </ButtonGroup>
+            <DialogTitle>Edit Lost & Found Post</DialogTitle>
 
             <DialogContent>
                 <TextField
@@ -156,7 +144,7 @@ export default function CreatePostDialog({
                     variant="outlined"
                     sx={{ mt: 2 }}
                 >
-                    Add Image
+                    Change Image
                     <input
                         type="file"
                         hidden
@@ -180,11 +168,14 @@ export default function CreatePostDialog({
                 )}
 
                 {error && (
-                    <div style={{ marginTop: 12 }}>
-                        <Typography sx={{ color: "red" }}>
-                            {error}
-                        </Typography>
-                    </div>
+                    <Typography
+                        sx={{
+                            color: "error.main",
+                            mt: 1.5,
+                        }}
+                    >
+                        {error}
+                    </Typography>
                 )}
             </DialogContent>
 
@@ -201,7 +192,7 @@ export default function CreatePostDialog({
                     onClick={handleSubmit}
                     disabled={submitting}
                 >
-                    {submitting ? "Creating..." : (postType === "Lost" ? "Create New Lost Post" : "Create New Found Post")}
+                    {submitting ? "Saving..." : "Save Changes"}
                 </Button>
             </DialogActions>
         </Dialog>

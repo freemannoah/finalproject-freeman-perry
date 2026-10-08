@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import type { AlertColor } from "@mui/material";
 import type { SimpleUser, User } from "../../../shared/types/User";
 import type { SimplePost, Post } from "../../../shared/types/Post";
-import type { Message } from "../../../shared/types/Message";
+import type { CreateMessageRequest, Message, MessageThread } from "../../../shared/types/Message";
 
 import * as authApi from "../api/authApi";
 import * as userApi from "../api/userApi";
@@ -29,23 +29,29 @@ interface ModelContextType {
   deleteCurrentUser: () => Promise<void>;
 
   //Public users
-  getUser: (userId: number) => Promise<SimpleUser>;
+  getUser: (userId: string) => Promise<SimpleUser>;
 
   //Board
   loadBoard: () => Promise<SimplePost[]>;
 
-  loadPost: (postId: number) => Promise<Post>;
+  loadPost: (postId: string) => Promise<Post>;
 
   createPost: (post: Post) => Promise<Post>;
 
   editPost: (post: Post) => Promise<Post>;
 
-  resolvePost: (postId: number) => Promise<Post>;
+  resolvePost: (postId: string) => Promise<Post>;
 
-  deletePost: (postId: number) => Promise<void>;
+  deletePost: (postId: string) => Promise<void>;
 
   //Messages
-  sendMessage: (message: Message) => Promise<Message>;
+  loadThreads: (postId: string) => Promise<MessageThread[]>;
+
+  createThread: (postId: string) => Promise<MessageThread>;
+
+  loadThread: (threadId: string) => Promise<Message[]>;
+
+  sendMessage: (threadId: string, request: CreateMessageRequest) => Promise<Message>;
 
   //Alerts
   alertOpen: boolean;
@@ -70,6 +76,9 @@ const initialModel: ClientModel = {
   board: undefined,
   isAuthenticated: false,
   authLoading: true,
+  messageThreads: [],
+  currentThread: undefined,
+  currentMessages: []
 };
 
 
@@ -168,6 +177,9 @@ export function ModelProvider({
         board: undefined,
         isAuthenticated: false,
         authLoading: false,
+        messageThreads: [],
+        currentThread: undefined,
+        currentMessages: []
       });
 
       if (response.message) {
@@ -182,6 +194,9 @@ export function ModelProvider({
         board: undefined,
         isAuthenticated: false,
         authLoading: false,
+        messageThreads: [],
+        currentThread: undefined,
+        currentMessages: []
       });
       throw error;
     }
@@ -220,7 +235,7 @@ export function ModelProvider({
    *
    * First checks the local cache.
    */
-  const getUser = async (userId: number): Promise<SimpleUser> => {
+  const getUser = async (userId: string): Promise<SimpleUser> => {
     const cached = model.cachedUsers[userId];
 
     if (cached) { return cached; }
@@ -284,13 +299,16 @@ export function ModelProvider({
       board: undefined,
       isAuthenticated: false,
       authLoading: false,
+      messageThreads: [],
+      currentThread: undefined,
+      currentMessages: []
     });
 
     triggerAlert("success", response.message || "Account deleted.");
   };
 
   //Load board
-  const loadBoard = async (): Promise<SimplePost[]> => {
+  const loadBoard = React.useCallback(async (): Promise<SimplePost[]> => {
     const response = await postApi.getBoard();
 
     if (!response.isSuccess) {
@@ -306,11 +324,11 @@ export function ModelProvider({
     }));
 
     return response.data;
-  };
+  }, []);
 
 
   //Load complete post
-  const loadPost = async (postId: number): Promise<Post> => {
+  const loadPost = async (postId: string): Promise<Post> => {
     const response = await postApi.getPost(postId);
 
     if (!response.isSuccess || !response.data) {
@@ -321,6 +339,11 @@ export function ModelProvider({
       ...prev,
 
       currentPost: response.data,
+
+      // Reset messaging state when changing posts.
+        messageThreads: [],
+        currentThread: undefined,
+        currentMessages: [],
     }));
 
     return response.data;
@@ -349,6 +372,7 @@ export function ModelProvider({
               user_id: response.data.user_id,
               userDisplayName: response.data.userDisplayName,
               title: response.data.title,
+              postType: response.data.postType,
               isResolved: response.data.isResolved,
               created: response.data.created,
               imageData: response.data.imageData,
@@ -383,6 +407,7 @@ export function ModelProvider({
               user_id: response.data.user_id,
               userDisplayName: response.data.userDisplayName,
               title: response.data.title,
+              postType: response.data.postType,
               isResolved: response.data.isResolved,
               created: response.data.created,
               imageData: response.data.imageData,
@@ -397,7 +422,7 @@ export function ModelProvider({
 
 
   // Resolve post
-  const resolvePost = async (postId: number): Promise<Post> => {
+  const resolvePost = async (postId: string): Promise<Post> => {
     const response = await postApi.resolvePost(postId);
 
     if (!response.isSuccess || !response.data) {
@@ -423,10 +448,9 @@ export function ModelProvider({
 
 
   //Delete post
-  const deletePost = async (postId: number): Promise<void> => {
+  const deletePost = async (postId: string): Promise<void> => {
 
-    const response =
-      await postApi.deletePost(postId);
+    const response = await postApi.deletePost(postId);
 
 
     if (
@@ -455,30 +479,117 @@ export function ModelProvider({
   };
 
   //Messages
-  const sendMessage = async (message: Message): Promise<Message> => {
-    const response = await messageApi.sendMessage(message);
+
+  /**
+  * Load all message threads available to the current user for a specific post.
+  */
+  const loadThreads = async (postId: string): Promise<MessageThread[]> => {
+    const response = await messageApi.getThreads(postId);
+
+    if (!response.isSuccess) {
+      throw new Error(response.message || "Unable to load message threads.");
+    }
+
+    const threads = response.data ?? [];
+
+    setModel(prev => ({
+      ...prev,
+      messageThreads: threads,
+      currentThread:
+        prev.currentThread &&
+          threads.some(
+            thread =>
+              thread.thread_id === prev.currentThread?.thread_id
+          )
+          ? prev.currentThread
+          : undefined,
+      currentMessages: [],
+    }));
+
+    return threads;
+  };
+
+  const createThread = async (postId: string): Promise<MessageThread> => {
+    const response = await messageApi.createThread(postId);
+
+    if (!response.isSuccess || !response.data) {
+      throw new Error(response.message || "Unable to create message thread.");
+    }
+
+    const thread = response.data;
+
+    setModel(prev => {
+      const alreadyExists = prev.messageThreads.some(
+        existing =>
+          existing.thread_id === thread.thread_id
+      );
+
+      return {
+        ...prev,
+
+        messageThreads: alreadyExists
+          ? prev.messageThreads
+          : [...prev.messageThreads, thread],
+
+        currentThread: thread,
+
+        currentMessages: [],
+      };
+    });
+
+    return thread;
+  };
+
+  /**
+  * Load all messages in a specific thread.
+  */
+  const loadThread = async (threadId: string): Promise<Message[]> => {
+    const response = await messageApi.getThread(threadId);
+
+    if (!response.isSuccess) {
+      throw new Error(response.message || "Unable to load messages.");
+    }
+
+    const messages = response.data ?? [];
+
+    setModel(prev => {
+      const thread = prev.messageThreads.find(
+        existing =>
+          existing.thread_id === threadId
+      );
+
+      return {
+        ...prev,
+        currentThread: thread,
+        currentMessages: messages,
+      };
+    });
+
+    return messages;
+  };
+
+  const sendMessage = async (threadId: string, request: CreateMessageRequest): Promise<Message> => {
+    const response = await messageApi.sendMessage(threadId, request);
 
     if (!response.isSuccess || !response.data) {
       throw new Error(response.message || "Unable to send message.");
     }
 
-    setModel(prev => {
-      if (!prev.currentPost || prev.currentPost.post_id !== response.data.post_id
-      ) {return prev;}
+    const message = response.data;
 
-      return {
-        ...prev,
-        currentPost: {
-          ...prev.currentPost,
+    setModel(prev => ({
+      ...prev,
 
-          messages: [
-            ...prev.currentPost.messages,
-            response.data,
-          ],
-        },
-      };
-    });
-    return response.data;
+      currentMessages:
+        prev.currentThread?.thread_id === threadId
+          ? [
+            ...prev.currentMessages,
+            message,
+          ]
+          : prev.currentMessages,
+    }));
+
+    return message;
   };
 
 
@@ -507,6 +618,9 @@ export function ModelProvider({
         resolvePost,
         deletePost,
 
+        loadThreads,
+        createThread,
+        loadThread,
         sendMessage,
 
         alertOpen,

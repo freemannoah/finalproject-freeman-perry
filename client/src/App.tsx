@@ -4,6 +4,7 @@ import { useModel } from "./context/ModelContext";
 
 import LoginPage from "./pages/LoginPage";
 import BoardPage from "./pages/BoardPage";
+import PostPage from "./pages/PostPage";
 
 
 function App() {
@@ -32,12 +33,12 @@ function App() {
             element={<BoardPage />}
           />
 
-          {/* <Route
+          <Route
             path="/post/:postId"
             element={<PostPage />}
           />
 
-          <Route
+          {/* <Route
             path="/account"
             element={<AccountPage />}
           /> */}

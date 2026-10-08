@@ -6,7 +6,8 @@ const postSchema = new mongoose.Schema({
   user_id: { type: String, required: true, ref: 'User' },
   title: { type: String, required: true },
   description: { type: String, default: '' },
-  isResolved: { type: Boolean, default: false },
+  postType: { type: String, required: true, default: 'Lost'},
+  isResolved: { type: Boolean, required: true, default: false },
   imageData: { type: String, default: '' },
   created: { type: Date, default: Date.now }
 });

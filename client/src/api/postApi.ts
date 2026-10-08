@@ -52,7 +52,7 @@ export async function getBoard(): Promise<SimpleResponse<SimplePost[]>> {
  *
  * Retrieves the full details of a post.
  */
-export async function getPost(postId: number): Promise<SimpleResponse<Post>> {
+export async function getPost(postId: string): Promise<SimpleResponse<Post>> {
     return apiRequest<SimpleResponse<Post>>(
         `/post/${postId}`,
         {
@@ -84,7 +84,7 @@ export async function editPost(post: Post): Promise<SimpleResponse<Post>> {
  *
  * Marks a post as resolved/archived.
  */
-export async function resolvePost(postId: number): Promise<SimpleResponse<Post>> {
+export async function resolvePost(postId: string): Promise<SimpleResponse<Post>> {
     return apiRequest<SimpleResponse<Post>>(
         `/post/resolve/${postId}`,
         {
@@ -98,7 +98,7 @@ export async function resolvePost(postId: number): Promise<SimpleResponse<Post>>
  *
  * Permanently deletes a post.
  */
-export async function deletePost(postId: number): Promise<SimpleResponse<SimplePost>> {
+export async function deletePost(postId: string): Promise<SimpleResponse<SimplePost>> {
     return apiRequest<SimpleResponse<SimplePost>>(
         `/post/${postId}`,
         {

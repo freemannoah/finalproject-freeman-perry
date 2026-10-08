@@ -1,6 +1,6 @@
 //User DTOs
 export interface User {
-    user_id: number;
+    user_id: string;
     username: string;
     password: string;
     display_name: string;
@@ -9,7 +9,7 @@ export interface User {
 }
 
 export interface SimpleUser {
-    user_id: number;
+    user_id: string;
     display_name: string;
     residence?: string;
     created: string;

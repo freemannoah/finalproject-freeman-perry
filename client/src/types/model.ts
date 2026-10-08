@@ -1,40 +1,38 @@
 import type { SimpleUser } from "../../../shared/types/User";
 import type { SimplePost, Post } from "../../../shared/types/Post";
+import type { Message, MessageThread } from "../../../shared/types/Message";
 
 export interface ClientModel {
     currUser?: SimpleUser;
 
-    /**
-     * Public user information retrieved from GET /user/{user_id}.
-     *
-     * The key is the user's ID.
-     */
-    cachedUsers: Record<number, SimpleUser>;
+    cachedUsers: Record<string, SimpleUser>;
 
-    /**
-     * Currently opened post.
-     */
     currentPost?: Post;
 
-    /**
-     * Posts currently displayed on the board.
-     */
     board?: SimplePost[];
 
-    /**
-     * True once the server has confirmed that we have
-     * an authenticated session.
-     */
     isAuthenticated: boolean;
 
-    /**
-     * True while the initial authentication check is happening.
-     *
-     * This prevents the application from briefly displaying
-     * the login page during startup.
-     */
     authLoading: boolean;
+
+    messageThreads: MessageThread[];
+
+    currentThread?: MessageThread;
+
+    currentMessages: Message[];
 }
+
+export const defaultUser = () : SimpleUser => {
+    const defaultUser: SimpleUser = {
+        user_id: "",
+        display_name: "User",
+        residence: "",
+        created: ""
+    }
+    return(defaultUser);
+}
+
+export type PostType = "Lost" | "Found";
 
 export const RES_HALLS = [
   "Daniels Hall",

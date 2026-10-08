@@ -1,11 +1,12 @@
-import type { Message } from "./Message";
+import type { PostType } from "../../client/src/types/model";
 
 //Post DTOs
 export interface SimplePost {
-    post_id: number;
-    user_id: number;
+    post_id: string;
+    user_id: string;
     userDisplayName: string;
     title: string;
+    postType: PostType;
     isResolved: boolean;
     created: string;
     imageData?: string;
@@ -13,5 +14,4 @@ export interface SimplePost {
 
 export interface Post extends SimplePost {
     description: string;
-    messages: Message[];
 }
