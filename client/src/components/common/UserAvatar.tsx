@@ -50,7 +50,7 @@ export default function UserAvatar({ userId, displayName, clickable=true }: Avat
                 <Box>
                     <IconButton onClick={avatarClick} size="small">
                         <Avatar sx={{ bgcolor: "secondary.main" }}>
-                            {user.display_name.charAt(0).toUpperCase()}
+                            {user.display_name === undefined ? "" : user.display_name.charAt(0).toUpperCase()}
                         </Avatar>
                     </IconButton>
                 </Box>
@@ -67,16 +67,16 @@ export default function UserAvatar({ userId, displayName, clickable=true }: Avat
                         sx={{
                             display: "flex",
                             justifyContent: "center",
-                            width: "250px",
-                            height: "75px"
+                            minWidth: "250px",
+                            minHeight: "75px"
                         }}
                     >
                         <Grid size={8} sx={{justifyContent: "center", alignContent: "center"}}>
-                            <Typography sx={{justifySelf:"center", fontWeight: "bold"}}>
+                            <Typography sx={{justifySelf:"center", fontWeight: "bold", ml: "10px"}}>
                                 {user.display_name}
                             </Typography>
 
-                            <Typography>
+                            <Typography sx={{ml: "10px"}}>
                                 Residence: {user.residence}
                             </Typography>
                         </Grid>
@@ -93,7 +93,7 @@ export default function UserAvatar({ userId, displayName, clickable=true }: Avat
     } else {
         return (
             <Avatar sx={{ bgcolor: "secondary.main" }}>
-                {user.display_name.charAt(0).toUpperCase()}
+                {user.display_name === undefined ? "" : user.display_name.charAt(0).toUpperCase()}
             </Avatar>
         );
     }

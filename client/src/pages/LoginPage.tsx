@@ -4,6 +4,7 @@ import { Box, Button, Grid, Typography } from "@mui/material";
 import LoginForm from "../components/auth/LoginForm";
 import CreateUserDialog from "../components/auth/CreateUserDialog";
 import NavBar from "../components/navbar";
+import AlertBar from "../components/alertbar";
 
 export default function LoginPage() {
 
@@ -14,6 +15,7 @@ export default function LoginPage() {
 
     return (<>
         <NavBar basic={true} />
+        <AlertBar/>
         <Box>
             <CreateUserDialog
                 open={createUserOpen}
@@ -44,9 +46,12 @@ export default function LoginPage() {
                     >
                         Welcome to 
                         <br/>
-                        Lost &amp; Found
+                        Gompei's Lost &amp; Found
                     </Typography>
                 </Grid>
+                <Typography variant="h4" sx={{pt: "20px"}}>
+                    Join this WPI community and make the lost found
+                </Typography>
 
 
                 <Grid

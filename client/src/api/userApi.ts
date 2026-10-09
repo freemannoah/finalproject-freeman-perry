@@ -44,7 +44,7 @@ export async function getUser(userId: string): Promise<SimpleResponse<SimpleUser
  * The server is responsible for ensuring that the submitted
  * user belongs to the authenticated session.
  */
-export async function editUser(user: User): Promise<SimpleResponse<SimpleUser>> {
+export async function editUser(user: SimpleUser): Promise<SimpleResponse<SimpleUser>> {
     return apiRequest<SimpleResponse<SimpleUser>>(
         "/user/edit",
         {

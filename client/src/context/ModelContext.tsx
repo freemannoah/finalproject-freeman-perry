@@ -24,7 +24,7 @@ interface ModelContextType {
 
   createUser: (user: User) => Promise<SimpleUser>;
 
-  editCurrentUser: (user: User) => Promise<SimpleUser>;
+  editCurrentUser: (user: SimpleUser) => Promise<SimpleUser>;
 
   deleteCurrentUser: () => Promise<void>;
 
@@ -259,7 +259,7 @@ export function ModelProvider({
   };
 
   //Edit currently authenticated user.
-  const editCurrentUser = async (user: User): Promise<SimpleUser> => {
+  const editCurrentUser = async (user: SimpleUser): Promise<SimpleUser> => {
     const response = await userApi.editUser(user);
 
     if (!response.isSuccess || !response.data) {

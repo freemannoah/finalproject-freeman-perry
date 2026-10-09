@@ -15,6 +15,7 @@ import { useModel } from "../context/ModelContext";
 import corkboardTop from "../assets/corkboard-top.png";
 import corkboardBody from "../assets/corkboard-body.png";
 import corkboardBottom from "../assets/corkboard-bottom.png";
+import AlertBar from "../components/alertbar";
 
 export default function BoardPage() {
     const { model, loadBoard } = useModel();
@@ -29,8 +30,7 @@ export default function BoardPage() {
     const [loading, setLoading] = React.useState(true);
     const [error, setError] = React.useState("");
 
-    React.useEffect(() => {
-        const load = async () => {
+    const load = async () => {
             try {
                 setLoading(true);
                 setError("");
@@ -47,6 +47,7 @@ export default function BoardPage() {
             }
         };
 
+    React.useEffect(() => {
         load();
     }, [loadBoard]);
 
@@ -111,6 +112,7 @@ export default function BoardPage() {
         >
             {/* Navbar */}
             <NavBar basic={false} />
+            <AlertBar/>
 
             {/* Board controls */}
             <Box
@@ -290,8 +292,10 @@ export default function BoardPage() {
 
             <CreatePostDialog
                 open={createPostOpen}
-                onClose={() =>
-                    setCreatePostOpen(false)
+                onClose={() => {
+                        setCreatePostOpen(false)
+                        load();
+                    }
                 }
             />
         </Box>

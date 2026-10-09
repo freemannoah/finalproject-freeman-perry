@@ -89,7 +89,7 @@ export default function CreateUserDialog({
 
         try {
             await createUser({
-                user_id: 0,
+                user_id: "0",
                 username: username.trim(),
                 password,
                 display_name:

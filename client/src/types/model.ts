@@ -35,6 +35,8 @@ export const defaultUser = () : SimpleUser => {
 export type PostType = "Lost" | "Found";
 
 export const RES_HALLS = [
+  "Off-Campus",
+  "Commuter",
   "Daniels Hall",
   "Founders Hall",
   "Institute Hall",

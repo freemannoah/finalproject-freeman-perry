@@ -1,5 +1,3 @@
-'use client';
-
 import { useModel } from '../context/ModelContext';
 import { Alert, Snackbar, type SnackbarCloseReason } from "@mui/material";
 

@@ -18,7 +18,6 @@ import {
 
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import SendIcon from "@mui/icons-material/Send";
 
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -33,6 +32,7 @@ import type { Post } from "../../../shared/types/Post";
 import type { Message } from "../../../shared/types/Message";
 import MessagePanel from "../components/messages/MessagePanel";
 import EditPostDialog from "../components/board/EditPostDialog";
+import AlertBar from "../components/alertbar";
 
 interface MessageThread {
     thread_id: string;
@@ -144,7 +144,8 @@ export default function PostPage() {
     }, [postId]);
 
     /*
-     * Load messages whenever the selected thread changes.
+     * Load messages whenever the selected thread changes,
+     * then poll every 5 seconds while a thread is open.
      */
     React.useEffect(() => {
         if (!selectedThread) {
@@ -152,10 +153,11 @@ export default function PostPage() {
             return;
         }
 
+        let cancelled = false;
+        let timeoutId: ReturnType<typeof setTimeout>;
+
         const loadMessages = async () => {
             try {
-                setLoadingMessages(true);
-
                 const response = await fetch(
                     `/api/message/thread/${selectedThread.thread_id}`,
                     {
@@ -167,23 +169,101 @@ export default function PostPage() {
 
                 if (!response.ok || !result.isSuccess) {
                     throw new Error(
-                        result.message ||
-                        "Failed to load messages."
+                        result.message || "Failed to load messages."
                     );
                 }
 
-                setMessages(result.data ?? []);
+                if (!cancelled) {
+                    setMessages(result.data ?? []);
+                    setError("");
+                }
             } catch (error) {
-                setError(
-                    error instanceof Error  ? error.message : "Failed to load messages."
-                );
+                if (!cancelled) {
+                    setError(
+                        error instanceof Error
+                            ? error.message
+                            : "Failed to load messages."
+                    );
+                }
             } finally {
-                setLoadingMessages(false);
+                if (!cancelled) {
+                    timeoutId = setTimeout(loadMessages, 5000);
+                }
             }
         };
 
-        loadMessages();
-    }, [selectedThread]);
+        // Load immediately, then repeat every 5 seconds.
+        void loadMessages();
+
+        return () => {
+            cancelled = true;
+            clearTimeout(timeoutId);
+        };
+    }, [selectedThread?.thread_id]);
+
+    /*
+    * Poll for newly created threads every 5 seconds.
+    */
+    React.useEffect(() => {
+        if (!postId) return;
+
+        let cancelled = false;
+        let timeoutId: ReturnType<typeof setTimeout>;
+
+        const loadThreads = async () => {
+            try {
+                const response = await fetch(
+                    `/api/message/post/${postId}/threads`,
+                    {
+                        credentials: "include",
+                    }
+                );
+
+                const result = await response.json();
+
+                if (!response.ok || !result.isSuccess) {
+                    throw new Error(
+                        result.message || "Failed to load conversations."
+                    );
+                }
+
+                if (!cancelled) {
+                    const loadedThreads = result.data ?? [];
+
+                    setThreads(loadedThreads);
+
+                    // Select a thread automatically only if none is selected.
+                    setSelectedThread((current) => {
+                        if (current) {
+                            return (
+                                loadedThreads.find(
+                                    (thread: { thread_id: string; }) =>
+                                        thread.thread_id === current.thread_id
+                                ) ?? loadedThreads[0] ?? null
+                            );
+                        }
+
+                        return loadedThreads[0] ?? null;
+                    });
+                }
+            } catch (error) {
+                if (!cancelled) {
+                    console.error("Failed to poll threads:", error);
+                }
+            } finally {
+                if (!cancelled) {
+                    timeoutId = setTimeout(loadThreads, 5000);
+                }
+            }
+        };
+
+        void loadThreads();
+
+        return () => {
+            cancelled = true;
+            clearTimeout(timeoutId);
+        };
+    }, [postId]);
 
     const handleStartThread = async () => {
         if (!postId) return;
@@ -223,8 +303,14 @@ export default function PostPage() {
         }
     };
 
-    const handleSendMessage = async () => {
-        if (!selectedThread || !messageText.trim() || sending) {return;}
+    const handleSendMessage = async (imageData: string = "") => {
+        if (
+            !selectedThread ||
+            (!messageText.trim() && !imageData) ||
+            sending
+        ) {
+            return;
+        }
 
         try {
             setSending(true);
@@ -241,25 +327,29 @@ export default function PostPage() {
                     body: JSON.stringify({
                         message_id: "0",
                         body: messageText.trim(),
-                        imageData: "",
+                        imageData,
                     }),
                 }
             );
 
             const result = await response.json();
 
-            if (!response.ok || !result.isSuccess) {
-                throw new Error(result.message || "Failed to send message.");
+            if (!response.ok || !result.isSuccess || !result.data) {
+                throw new Error(
+                    result.message || "Failed to send message."
+                );
             }
 
-            setMessages((previous) => [
-                ...previous,
-                result.data,
-            ]);
-
+            setMessages(previous => [...previous, result.data]);
             setMessageText("");
         } catch (error) {
-            setError(error instanceof Error ? error.message : "Failed to send message.");
+            setError(
+                error instanceof Error
+                    ? error.message
+                    : "Failed to send message."
+            );
+
+            throw error;
         } finally {
             setSending(false);
         }
@@ -273,7 +363,7 @@ export default function PostPage() {
             setError("");
 
             await deletePost(post.post_id);
-            
+
             setDeleteDialogOpen(false);
             navigate("/board");
         } catch (error) {
@@ -342,6 +432,7 @@ export default function PostPage() {
             }}
         >
             <NavBar basic={false} />
+            <AlertBar/>
 
             {/* Corkboard */}
             <Box
