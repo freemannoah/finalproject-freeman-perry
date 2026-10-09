@@ -33,7 +33,7 @@ export default function LoginPage() {
                 >
                     <Typography
                         variant="h2"
-                        sx={(theme) => ({
+                        sx={(_theme) => ({
                             display: "inline-block",
                             marginLeft: "20px",
                             marginRight: "20px",

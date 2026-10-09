@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 
 import { useModel } from "../context/ModelContext";
 import AccountDialog from "./auth/AccountDialog";
-import type { SimpleUser, User } from "../../../shared/types/User";
+import type { SimpleUser } from "../../../shared/types/User";
 
 interface NavBarProps {
   basic: boolean;

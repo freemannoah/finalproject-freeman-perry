@@ -56,7 +56,7 @@ export default function PostPage() {
     const [editDialogOpen, setEditDialogOpen] = React.useState(false);
 
     const [loading, setLoading] = React.useState(true);
-    const [loadingMessages, setLoadingMessages] = React.useState(false);
+    const [loadingMessages] = React.useState(false);
 
     const [resolveDialogOpen, setResolveDialogOpen] = React.useState(false);
     const [resolving, setResolving] = React.useState(false);

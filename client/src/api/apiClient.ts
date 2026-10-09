@@ -1,3 +1,7 @@
+const API_BASE_URL = (import.meta.env.VITE_API_URL ?? "").replace(/\/+$/, "");
+
+const API_PREFIX = API_BASE_URL ? "" : "/api";
+
 export class ApiError extends Error {
     status: number;
 
@@ -8,18 +12,21 @@ export class ApiError extends Error {
     }
 }
 
-/**
- * The browser's authentication cookie is automatically included because credentials are set to "include".
- */
-export async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const response = await fetch(`/api${endpoint}`, {
-        ...options,
-        credentials: "include",
-        headers: {
-            "Content-Type": "application/json",
-            ...options.headers,
-        },
-    });
+export async function apiRequest<T>(
+    endpoint: string,
+    options: RequestInit = {}
+): Promise<T> {
+    const response = await fetch(
+        `${API_BASE_URL}${API_PREFIX}${endpoint}`,
+        {
+            ...options,
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+                ...options.headers,
+            },
+        }
+    );
 
     let body: unknown;
 
