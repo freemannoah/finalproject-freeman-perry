@@ -1,6 +1,5 @@
-const API_BASE_URL = (import.meta.env.VITE_API_URL ?? "").replace(/\/+$/, "");
 
-const API_PREFIX = API_BASE_URL ? "" : "/api";
+const API_BASE_URL = "https://finalproject-freeman-perry-server.onrender.com";
 
 export class ApiError extends Error {
     status: number;
@@ -16,17 +15,18 @@ export async function apiRequest<T>(
     endpoint: string,
     options: RequestInit = {}
 ): Promise<T> {
-    const response = await fetch(
-        `${API_BASE_URL}${API_PREFIX}${endpoint}`,
-        {
-            ...options,
-            credentials: "include",
-            headers: {
-                "Content-Type": "application/json",
-                ...options.headers,
-            },
-        }
-    );
+    // Ensure the endpoint begins with exactly one slash.
+    const path = `/${endpoint.replace(/^\/+/, "")}`;
+    const url = `${API_BASE_URL}${path}`;
+
+    const response = await fetch(url, {
+        ...options,
+        credentials: "include",
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
 
     let body: unknown;
 
