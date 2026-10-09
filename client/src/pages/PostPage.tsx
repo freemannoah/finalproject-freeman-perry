@@ -45,7 +45,7 @@ export default function PostPage() {
     const { postId } = useParams<{ postId: string }>();
     const navigate = useNavigate();
 
-    const { model, resolvePost, deletePost } = useModel();
+    const { model, resolvePost, deletePost, loadPost, loadThreads, loadThread, sendMessage, createThread } = useModel();
 
     const [post, setPost] = React.useState<Post | null>(null);
     const [threads, setThreads] = React.useState<MessageThread[]>([]);
@@ -80,52 +80,18 @@ export default function PostPage() {
     React.useEffect(() => {
         if (!postId) return;
 
-        const loadPost = async () => {
+        const loadingPost = async () => {
             try {
                 setLoading(true);
                 setError("");
 
-                const postResponse = await fetch(
-                    `/api/post/${postId}`,
-                    {
-                        credentials: "include",
-                    }
-                );
+                const loadedPost = await loadPost(postId);
+                setPost(loadedPost);
 
-                const postResult = await postResponse.json();
-
-                if (!postResponse.ok || !postResult.isSuccess) {
-                    throw new Error(
-                        postResult.message ||
-                        "Failed to load post."
-                    );
-                }
-
-                setPost(postResult.data);
-
-                const threadResponse = await fetch(
-                    `/api/message/post/${postId}/threads`,
-                    {
-                        credentials: "include",
-                    }
-                );
-
-                const threadResult = await threadResponse.json();
-
-                if (!threadResponse.ok || !threadResult.isSuccess) {
-                    throw new Error(
-                        threadResult.message || "Failed to load conversations."
-                    );
-                }
-
-                const loadedThreads = threadResult.data ?? [];
+                const loadedThreads = await loadThreads(postId);
 
                 setThreads(loadedThreads);
 
-                /*
-                 * Automatically select the only available
-                 * conversation.
-                 */
                 if (loadedThreads.length > 0) {
                     setSelectedThread(loadedThreads[0]);
                 } else {
@@ -140,7 +106,7 @@ export default function PostPage() {
             }
         };
 
-        loadPost();
+        loadingPost();
     }, [postId]);
 
     /*
@@ -158,23 +124,10 @@ export default function PostPage() {
 
         const loadMessages = async () => {
             try {
-                const response = await fetch(
-                    `/api/message/thread/${selectedThread.thread_id}`,
-                    {
-                        credentials: "include",
-                    }
-                );
-
-                const result = await response.json();
-
-                if (!response.ok || !result.isSuccess) {
-                    throw new Error(
-                        result.message || "Failed to load messages."
-                    );
-                }
+                const loadedMessages = await loadThread(selectedThread.thread_id);
 
                 if (!cancelled) {
-                    setMessages(result.data ?? []);
+                    setMessages(loadedMessages);
                     setError("");
                 }
             } catch (error) {
@@ -210,36 +163,21 @@ export default function PostPage() {
         let cancelled = false;
         let timeoutId: ReturnType<typeof setTimeout>;
 
-        const loadThreads = async () => {
+        const loadingThreads = async () => {
             try {
-                const response = await fetch(
-                    `/api/message/post/${postId}/threads`,
-                    {
-                        credentials: "include",
-                    }
-                );
-
-                const result = await response.json();
-
-                if (!response.ok || !result.isSuccess) {
-                    throw new Error(
-                        result.message || "Failed to load conversations."
-                    );
-                }
+                const loadedThreads = await loadThreads(postId);
 
                 if (!cancelled) {
-                    const loadedThreads = result.data ?? [];
-
                     setThreads(loadedThreads);
 
-                    // Select a thread automatically only if none is selected.
                     setSelectedThread((current) => {
                         if (current) {
                             return (
                                 loadedThreads.find(
-                                    (thread: { thread_id: string; }) =>
-                                        thread.thread_id === current.thread_id
-                                ) ?? loadedThreads[0] ?? null
+                                    (thread) => thread.thread_id === current.thread_id
+                                ) ??
+                                loadedThreads[0] ??
+                                null
                             );
                         }
 
@@ -257,7 +195,7 @@ export default function PostPage() {
             }
         };
 
-        void loadThreads();
+        void loadingThreads();
 
         return () => {
             cancelled = true;
@@ -272,29 +210,16 @@ export default function PostPage() {
             setStartingThread(true);
             setError("");
 
-            const response = await fetch(
-                `/api/message/post/${postId}/thread`,
-                {
-                    method: "POST",
-                    credentials: "include",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        thread_id: "0",
-                    }),
-                }
-            );
+            const newThread = await createThread(postId);
 
-            const result = await response.json();
+            setThreads((previous) => {
+                const alreadyExists = previous.some(
+                    (thread) => thread.thread_id === newThread.thread_id
+                );
 
-            if (!response.ok || !result.isSuccess) {
-                throw new Error(result.message || "Failed to start conversation.");
-            }
+                return alreadyExists ? previous : [...previous, newThread];
+            });
 
-            const newThread: MessageThread = result.data;
-
-            setThreads([newThread]);
             setSelectedThread(newThread);
         } catch (error) {
             setError(error instanceof Error ? error.message : "Failed to start conversation.");
@@ -316,31 +241,15 @@ export default function PostPage() {
             setSending(true);
             setError("");
 
-            const response = await fetch(
-                `/api/message/thread/${selectedThread.thread_id}`,
+            const newMessage = await sendMessage(
+                selectedThread.thread_id,
                 {
-                    method: "POST",
-                    credentials: "include",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        message_id: "0",
-                        body: messageText.trim(),
-                        imageData,
-                    }),
+                    body: messageText.trim(),
+                    imageData,
                 }
             );
 
-            const result = await response.json();
-
-            if (!response.ok || !result.isSuccess || !result.data) {
-                throw new Error(
-                    result.message || "Failed to send message."
-                );
-            }
-
-            setMessages(previous => [...previous, result.data]);
+            setMessages((previous) => [...previous, newMessage]);
             setMessageText("");
         } catch (error) {
             setError(
@@ -432,7 +341,7 @@ export default function PostPage() {
             }}
         >
             <NavBar basic={false} />
-            <AlertBar/>
+            <AlertBar />
 
             {/* Corkboard */}
             <Box
