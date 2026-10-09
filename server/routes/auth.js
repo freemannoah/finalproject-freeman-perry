@@ -10,6 +10,7 @@ const router = express.Router();
 router.post('/login', async (req, res) => {
 
   try {
+    const env = process.env.NODE_ENV;
 
     const { username, password } = req.body;
     if (!username || !password) {
@@ -37,7 +38,14 @@ router.post('/login', async (req, res) => {
     );
 
     activeTokens.add(token);
-    res.cookie('sessionToken', token, {httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'none', maxAge: 7 * 24 * 60 * 60 * 1000});
+    res.cookie(
+      'sessionToken', 
+      token, {
+        httpOnly: true, 
+        secure: env === 'production', 
+        sameSite: env === 'production' ? 'none' : 'Lax', 
+        maxAge: 7 * 24 * 60 * 60 * 1000
+      });
     return sendResponse(res, 200, {
         user_id: user.user_id,
         display_name: user.display_name,

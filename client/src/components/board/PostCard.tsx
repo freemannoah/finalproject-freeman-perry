@@ -55,6 +55,7 @@ export default function PostCard({ post }: PostCardProps) {
                         sx={{
                             fontWeight: "bold",
                             mb: 1,
+                            ml: "5px"
                         }}
                     >
                         {post.title}
@@ -63,7 +64,7 @@ export default function PostCard({ post }: PostCardProps) {
                     <Typography
                         variant="body2"
                         color="text.secondary"
-                        sx={{ mb: 1 }}
+                        sx={{ mb: 1, ml: "5px"}}
                     >
                         Posted by {post.userDisplayName}
                     </Typography>
@@ -71,12 +72,13 @@ export default function PostCard({ post }: PostCardProps) {
                     <Typography
                         variant="caption"
                         color="text.secondary"
+                        sx={{ml: "5px"}}
                     >
                         {new Date(post.created).toLocaleDateString()}
                     </Typography>
                 </Grid>
 
-                <Grid size={2} sx={{alignContent: "center"}}>
+                <Grid size={2} sx={{alignContent: "center", minWidth: "50px"}}>
                     <UserAvatar userId={post.user_id} displayName={post.userDisplayName}/>
                 </Grid>
             </Grid>
