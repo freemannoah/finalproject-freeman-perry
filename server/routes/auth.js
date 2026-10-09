@@ -37,7 +37,7 @@ router.post('/login', async (req, res) => {
     );
 
     activeTokens.add(token);
-    res.cookie('sessionToken', token, {httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 * 1000});
+    res.cookie('sessionToken', token, {httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'none', maxAge: 7 * 24 * 60 * 60 * 1000});
     return sendResponse(res, 200, {
         user_id: user.user_id,
         display_name: user.display_name,
